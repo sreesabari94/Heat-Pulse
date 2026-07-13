@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: fraudshield-genai
+
+fraudshield:
+  gemini:
+    project-id: ${GCP_PROJECT_ID:your-gcp-project-id}
+    location: ${GCP_LOCATION:us-central1}
+    model-name: ${GEMINI_MODEL:gemini-2.0-flash}
+    max-output-tokens: 300
+    temperature: 0.2
+
+server:
+  port: 8080
