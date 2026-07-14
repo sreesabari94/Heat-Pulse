@@ -26,28 +26,43 @@ public class RiskAssessmentController {
         RiskAssessment assessment = riskAssessmentService.evaluate(request.bookingId(), request.shipperId(), request.signals());
         InvestigationCase investigationCase = caseService.createCase(assessment);
 
-        List<SignalResponse> signalResponses = assessment.signals().stream()
+        List<SignalResponse> signalResponses = assessment.triggeredSignals().stream()
                 .map(s -> new SignalResponse(s.signalCode(), s.signalName(), s.score()))
                 .toList();
-
-        String recommendedAction = switch (assessment.decision()) {
-            case BLOCK -> "Block shipment immediately and escalate to fraud team.";
-            case HOLD -> "Hold shipment and perform account validation.";
-            case REVIEW -> "Review shipment details and verify shipper identity.";
-            case ALLOW -> "Allow shipment to proceed with standard monitoring.";
-        };
 
         EvaluationResponse response = new EvaluationResponse(
                 assessment.assessmentId(),
                 assessment.bookingId(),
                 assessment.shipperId(),
                 assessment.riskScore(),
-                assessment.riskLevel().name(),
-                assessment.decision().name(),
-                assessment.confidence(),
+            assessment.riskLevel(),
+            assessment.decision(),
                 signalResponses,
-                investigationCase.getGeminiExplanation(),
-                recommendedAction
+            assessment.aiExplanation(),
+            assessment.recommendedAction()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/generate-ai")
+    public ResponseEntity<EvaluationResponse> generateAi(@RequestBody RiskAssessment request) {
+        RiskAssessment enrichedAssessment = riskAssessmentService.generateAiFromAssessment(request);
+
+        List<SignalResponse> signalResponses = enrichedAssessment.triggeredSignals().stream()
+                .map(s -> new SignalResponse(s.signalCode(), s.signalName(), s.score()))
+                .toList();
+
+        EvaluationResponse response = new EvaluationResponse(
+                enrichedAssessment.assessmentId(),
+                enrichedAssessment.bookingId(),
+                enrichedAssessment.shipperId(),
+                enrichedAssessment.riskScore(),
+                enrichedAssessment.riskLevel(),
+                enrichedAssessment.decision(),
+                signalResponses,
+                enrichedAssessment.aiExplanation(),
+                enrichedAssessment.recommendedAction()
         );
 
         return ResponseEntity.ok(response);

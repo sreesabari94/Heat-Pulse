@@ -4,9 +4,9 @@ spring:
 
 fraudshield:
   gemini:
-    project-id: ${GCP_PROJECT_ID:your-gcp-project-id}
+    project-id: ${GCP_PROJECT_ID:qwiklabs-gcp-01-dc26193870df}
     location: ${GCP_LOCATION:us-central1}
-    model-name: ${GEMINI_MODEL:gemini-2.0-flash}
+    model-name: ${GEMINI_MODEL:gemini-2.5-flash}
     max-output-tokens: 300
     temperature: 0.2
 

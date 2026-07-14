@@ -58,7 +58,8 @@ public class GeminiClient {
 
     private String buildPrompt(String shipmentDetails, double riskScore, List<String> signals) {
         return """
-                You are a UPS Fraud Analyst. Analyze this shipment and provide an explanation for why it was flagged.
+                You are a UPS Fraud Analyst.
+                Explain why this shipment was flagged.
                 
                 SHIPMENT DETAILS:
                 %s
@@ -68,15 +69,17 @@ public class GeminiClient {
                 TRIGGERED SIGNALS:
                 %s
                 
-                Provide your response in EXACTLY this format (maximum 200 words):
+                Provide your response in EXACTLY this format:
                 
                 RISK SUMMARY: [One-line summary of the risk level]
                 
                 FRAUD INDICATORS: [List key fraud indicators detected]
                 
-                BUSINESS IMPACT: [Potential financial or operational impact]
+                AI EXPLANATION: [Shipment deviates significantly from normal behavior]
                 
-                RECOMMENDED ACTION: [Specific action to take - Hold, Review, Block, or Allow]
+                RECOMMENDED ACTION: [Hold and verify account ownership or equivalent action]
+
+                CONFIDENCE LEVEL: [HIGH/MEDIUM/LOW]
                 """.formatted(shipmentDetails, riskScore, String.join("\n", signals));
     }
 

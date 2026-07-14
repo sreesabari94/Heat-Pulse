@@ -1,6 +1,5 @@
 package com.ups.fraudshield.genai.service;
 
-import com.ups.fraudshield.genai.client.GeminiClient;
 import com.ups.fraudshield.genai.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,29 +9,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Service
 public class InvestigationCaseService {
 
     private static final Logger log = LoggerFactory.getLogger(InvestigationCaseService.class);
 
-    private final GeminiClient geminiClient;
     private final Map<String, InvestigationCase> caseStore = new ConcurrentHashMap<>();
 
-    public InvestigationCaseService(GeminiClient geminiClient) {
-        this.geminiClient = geminiClient;
-    }
+    public InvestigationCaseService() {}
 
     public InvestigationCase createCase(RiskAssessment assessment) {
-        String explanation = generateExplanation(assessment);
+        String explanation = assessment.aiExplanation();
+        Decision decision = Decision.valueOf(assessment.decision());
 
         InvestigationCase investigationCase = new InvestigationCase(
                 UUID.randomUUID().toString(),
                 assessment.bookingId(),
                 assessment.riskScore(),
-                assessment.decision(),
-                assessment.signals(),
+            decision,
+            assessment.triggeredSignals(),
                 explanation,
                 ReviewStatus.OPEN
         );
@@ -68,33 +64,5 @@ public class InvestigationCaseService {
         investigationCase.setReviewStatus(newStatus);
         log.info("Case {} status updated to {}", caseId, newStatus);
         return investigationCase;
-    }
-
-    private String generateExplanation(RiskAssessment assessment) {
-        List<String> signalDescriptions = assessment.signals().stream()
-                .map(s -> "- %s (%s): %s [score: %d]".formatted(s.signalName(), s.severity(), s.reason(), s.score()))
-                .toList();
-
-        try {
-            String context = "Booking: %s, Risk Score: %d, Decision: %s".formatted(
-                    assessment.bookingId(), assessment.riskScore(), assessment.decision());
-            return geminiClient.generateExplanation(context, assessment.riskScore() / 100.0, signalDescriptions);
-        } catch (GeminiClient.GeminiCallException e) {
-            log.warn("Gemini call failed for case explanation, using fallback: {}", e.getMessage());
-            return buildFallbackExplanation(assessment);
-        }
-    }
-
-    private String buildFallbackExplanation(RiskAssessment assessment) {
-        String signalSummary = assessment.signals().stream()
-                .map(s -> s.signalName() + ": " + s.reason())
-                .collect(Collectors.joining("; "));
-
-        return "Risk score %d (%s). Decision: %s. Signals: %s".formatted(
-                assessment.riskScore(),
-                assessment.riskLevel(),
-                assessment.decision(),
-                signalSummary
-        );
     }
 }

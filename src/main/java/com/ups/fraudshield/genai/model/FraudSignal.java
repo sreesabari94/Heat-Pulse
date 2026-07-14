@@ -4,6 +4,6 @@ public record FraudSignal(
         String signalCode,
         String signalName,
         String severity,
-        int score,
+        Integer score,
         String reason
 ) {}
